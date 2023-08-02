@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
+	"os"
 	"tweets/api/controller"
 	"tweets/api/protobuf/tweets_service"
 	"tweets/config"
@@ -17,8 +17,8 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-const (
-	portNumber int = 8000
+var (
+	portNumber = os.Getenv("APP_PORT")
 )
 
 func main() {
@@ -37,9 +37,9 @@ func main() {
 	tweetsUserCase := usecase.NewTweetsUseCaseImpl(tweetsRepository)
 	tweetsServer := controller.NewTweetsController(tweetsUserCase)
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", portNumber))
+	listener, err := net.Listen("tcp", ":"+portNumber)
 	if err != nil {
-		log.Fatalf("error: failed to listen to %d: %s", portNumber, err)
+		log.Fatalf("error: failed to listen to %s: %s", portNumber, err)
 	}
 
 	defer listener.Close()
@@ -54,7 +54,7 @@ func main() {
 	log.Printf("starting gRPC server at %s\n", listener.Addr())
 	err = grpcServer.Serve(listener)
 	if err != nil {
-		log.Fatalf("error: failed to start gRPC server at %d: %s", portNumber, err)
+		log.Fatalf("error: failed to start gRPC server at %s: %s", listener.Addr(), err)
 	}
 
 }
