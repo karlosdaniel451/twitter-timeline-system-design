@@ -26,7 +26,7 @@ type TweetsServiceClient interface {
 	DeleteTweetById(ctx context.Context, in *DeleteTweetByIdRequest, opts ...grpc.CallOption) (*DeleteTweetByIdResponse, error)
 	GetTweetById(ctx context.Context, in *GetTweetByIdRequest, opts ...grpc.CallOption) (*GetTweetByIdResponse, error)
 	GetAllTweets(ctx context.Context, in *GetAllTweetsRequest, opts ...grpc.CallOption) (*GetAllTweetsResponse, error)
-	GetTweetsOfUser(ctx context.Context, in *GetTweetByIdRequest, opts ...grpc.CallOption) (*GetTweetByIdResponse, error)
+	GetTweetsOfUser(ctx context.Context, in *GetTweetsOfUserRequest, opts ...grpc.CallOption) (*GetTweetsOfUserResponse, error)
 }
 
 type tweetsServiceClient struct {
@@ -73,8 +73,8 @@ func (c *tweetsServiceClient) GetAllTweets(ctx context.Context, in *GetAllTweets
 	return out, nil
 }
 
-func (c *tweetsServiceClient) GetTweetsOfUser(ctx context.Context, in *GetTweetByIdRequest, opts ...grpc.CallOption) (*GetTweetByIdResponse, error) {
-	out := new(GetTweetByIdResponse)
+func (c *tweetsServiceClient) GetTweetsOfUser(ctx context.Context, in *GetTweetsOfUserRequest, opts ...grpc.CallOption) (*GetTweetsOfUserResponse, error) {
+	out := new(GetTweetsOfUserResponse)
 	err := c.cc.Invoke(ctx, "/TweetsService/GetTweetsOfUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ type TweetsServiceServer interface {
 	DeleteTweetById(context.Context, *DeleteTweetByIdRequest) (*DeleteTweetByIdResponse, error)
 	GetTweetById(context.Context, *GetTweetByIdRequest) (*GetTweetByIdResponse, error)
 	GetAllTweets(context.Context, *GetAllTweetsRequest) (*GetAllTweetsResponse, error)
-	GetTweetsOfUser(context.Context, *GetTweetByIdRequest) (*GetTweetByIdResponse, error)
+	GetTweetsOfUser(context.Context, *GetTweetsOfUserRequest) (*GetTweetsOfUserResponse, error)
 	mustEmbedUnimplementedTweetsServiceServer()
 }
 
@@ -110,7 +110,7 @@ func (UnimplementedTweetsServiceServer) GetTweetById(context.Context, *GetTweetB
 func (UnimplementedTweetsServiceServer) GetAllTweets(context.Context, *GetAllTweetsRequest) (*GetAllTweetsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllTweets not implemented")
 }
-func (UnimplementedTweetsServiceServer) GetTweetsOfUser(context.Context, *GetTweetByIdRequest) (*GetTweetByIdResponse, error) {
+func (UnimplementedTweetsServiceServer) GetTweetsOfUser(context.Context, *GetTweetsOfUserRequest) (*GetTweetsOfUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTweetsOfUser not implemented")
 }
 func (UnimplementedTweetsServiceServer) mustEmbedUnimplementedTweetsServiceServer() {}
@@ -199,7 +199,7 @@ func _TweetsService_GetAllTweets_Handler(srv interface{}, ctx context.Context, d
 }
 
 func _TweetsService_GetTweetsOfUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTweetByIdRequest)
+	in := new(GetTweetsOfUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func _TweetsService_GetTweetsOfUser_Handler(srv interface{}, ctx context.Context
 		FullMethod: "/TweetsService/GetTweetsOfUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TweetsServiceServer).GetTweetsOfUser(ctx, req.(*GetTweetByIdRequest))
+		return srv.(TweetsServiceServer).GetTweetsOfUser(ctx, req.(*GetTweetsOfUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

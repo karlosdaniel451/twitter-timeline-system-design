@@ -9,7 +9,7 @@ service TweetsService {
   rpc DeleteTweetById(DeleteTweetByIdRequest) returns (DeleteTweetByIdResponse);
   rpc GetTweetById (GetTweetByIdRequest) returns (GetTweetByIdResponse);
   rpc GetAllTweets (GetAllTweetsRequest) returns (GetAllTweetsResponse);
-  rpc GetTweetsOfUser (GetTweetByIdRequest) returns (GetTweetByIdResponse);
+  rpc GetTweetsOfUser (GetTweetsOfUserRequest) returns (GetTweetsOfUserResponse);
 }
 
 message Tweet {

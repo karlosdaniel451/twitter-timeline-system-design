@@ -2,12 +2,16 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"tweets/api/protobuf/tweets_service"
 	"tweets/domain/models"
+	repositoryerrors "tweets/repository/repository_errors"
 	"tweets/usecase"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -76,14 +80,61 @@ func (controller *TweetsController) DeleteTweetById(
 	request *tweets_service.DeleteTweetByIdRequest,
 ) (*tweets_service.DeleteTweetByIdResponse, error) {
 
-	return nil, nil
+	response := tweets_service.DeleteTweetByIdResponse{}
+	tweetId, err := uuid.Parse(request.TweetId)
+	if err != nil {
+		return &response, status.Errorf(
+			codes.InvalidArgument, fmt.Sprintf("invalid tweet uuid: %s", err),
+		)
+	}
+
+	err = controller.tweetsUseCase.DeleteTweetById(tweetId)
+	if err != nil {
+		var errNotFound *repositoryerrors.ErrorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, status.Errorf(
+				codes.NotFound, err.Error(),
+			)
+		}
+		return nil, err
+	}
+	return &response, nil
 }
+
 func (controller *TweetsController) GetTweetById(
 	ctx context.Context,
 	request *tweets_service.GetTweetByIdRequest,
 ) (*tweets_service.GetTweetByIdResponse, error) {
 
-	return nil, nil
+	tweetId, err := uuid.Parse(request.TweetId)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument, fmt.Sprintf("invalid tweet uuid: %s", err),
+		)
+	}
+
+	tweet, err := controller.tweetsUseCase.GetTweetById(tweetId)
+	if err != nil {
+		var errNotFound *repositoryerrors.ErrorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, status.Errorf(
+				codes.NotFound, err.Error(),
+			)
+		}
+		return nil, err
+	}
+
+	response := tweets_service.GetTweetByIdResponse{}
+	response.Tweet = &tweets_service.Tweet{
+		Id:        tweet.Id.String(),
+		Text:      tweet.Text,
+		UserId:    tweet.UserId.String(),
+		RepliesTo: tweet.RepliesTo.String(),
+		QuoteTo:   tweet.QuoteTo.String(),
+		CreatedAt: timestamppb.New(tweet.CreatedAt),
+	}
+
+	return &response, nil
 }
 
 func (controller *TweetsController) GetAllTweets(
@@ -114,8 +165,39 @@ func (controller *TweetsController) GetAllTweets(
 
 func (controller *TweetsController) GetTweetsOfUser(
 	ctx context.Context,
-	request *tweets_service.GetTweetByIdRequest,
-) (*tweets_service.GetTweetByIdResponse, error) {
+	request *tweets_service.GetTweetsOfUserRequest,
+) (*tweets_service.GetTweetsOfUserResponse, error) {
 
-	return nil, nil
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument, fmt.Sprintf("invalid user uuid: %s", err),
+		)
+	}
+
+	tweets, err := controller.tweetsUseCase.GetTweetOfUser(userId)
+	if err != nil {
+		var errNotFound *repositoryerrors.ErrorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, status.Errorf(
+				codes.NotFound, err.Error(),
+			)
+		}
+		return nil, err
+	}
+
+	response := tweets_service.GetTweetsOfUserResponse{}
+
+	for _, tweet := range tweets {
+		response.Tweets = append(response.Tweets, &tweets_service.Tweet{
+			Id:        tweet.Id.String(),
+			Text:      tweet.Text,
+			UserId:    tweet.UserId.String(),
+			RepliesTo: tweet.RepliesTo.String(),
+			QuoteTo:   tweet.QuoteTo.String(),
+			CreatedAt: timestamppb.New(tweet.CreatedAt),
+		})
+	}
+
+	return &response, nil
 }

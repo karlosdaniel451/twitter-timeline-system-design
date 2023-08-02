@@ -9,6 +9,7 @@ import (
 	"tweets/config"
 	"tweets/db"
 	"tweets/repository"
+	repositoryerrors "tweets/repository/repository_errors"
 	"tweets/usecase"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
@@ -23,9 +24,10 @@ const (
 func main() {
 	var _ tweets_service.TweetsServiceServer = &controller.TweetsController{}
 	var _ repository.TweetRepository = &repository.TweetRepositoryDB{}
+	var _ error = &repositoryerrors.ErrorNotFound{}
 
 	if err := db.Connect(); err != nil {
-		log.Fatalf("error: failed to connect to databased: %s", err)
+		log.Fatalf("error: failed to connect to database: %s", err)
 	}
 
 	dbConn, _ := db.DB.DB()

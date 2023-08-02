@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"tweets/domain/models"
+	repositoryerrors "tweets/repository/repository_errors"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -83,10 +84,12 @@ func (repository TweetRepositoryDB) GetTweetById(id uuid.UUID) (*models.Tweet, e
 	var tweet models.Tweet
 
 	result := repository.db.First(&tweet, "id = ?", id)
-	if result.Error == gorm.ErrRecordNotFound {
-		return nil, fmt.Errorf("there is no tweet with id %s", id.String())
-	}
 	if result.Error != nil {
+		if result.Error.Error() == gorm.ErrRecordNotFound.Error() {
+			return nil, &repositoryerrors.ErrorNotFound{
+				Msg: fmt.Sprintf("there is no tweet with id %s", id.String()),
+			}
+		}
 		return nil, result.Error
 	}
 
@@ -94,6 +97,22 @@ func (repository TweetRepositoryDB) GetTweetById(id uuid.UUID) (*models.Tweet, e
 }
 
 func (repository TweetRepositoryDB) DeleteTweetById(id uuid.UUID) error {
+	var tweet models.Tweet
+
+	result := repository.db.First(&tweet, id)
+	if result.Error != nil {
+		if result.Error.Error() == gorm.ErrRecordNotFound.Error() {
+			return &repositoryerrors.ErrorNotFound{
+				Msg: fmt.Sprintf("there is no tweet with id %s", id.String()),
+			}
+		}
+		return result.Error
+	}
+	result = result.Delete(&tweet)
+	if result.Error != nil {
+		return result.Error
+	}
+
 	return nil
 }
 
@@ -109,5 +128,12 @@ func (repository TweetRepositoryDB) GetAllTweets() ([]*models.Tweet, error) {
 }
 
 func (repository TweetRepositoryDB) GetTweetsOfUser(user_id uuid.UUID) ([]*models.Tweet, error) {
-	return nil, nil
+	userTweets := make([]*models.Tweet, 0)
+
+	result := repository.db.Find(&userTweets, "user_id = ?", user_id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return userTweets, nil
 }
