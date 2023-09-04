@@ -1,4 +1,5 @@
-FROM golang:1.20-buster as builder
+# Always prefer the latest stable Go version.
+FROM golang:1.21-alpine AS builder
 
 # Create and change to the app directory.
 WORKDIR /app
@@ -8,20 +9,18 @@ COPY go.sum ./
 
 RUN go mod download
 
+# Copy source/configuration code.
 COPY . ./
 
 # Build the executable file.
 RUN go build -v -o tweets ./cmd/main.go
 
-# Use the official Debian slim image for a lean production container.
-# https://hub.docker.com/_/debian
-# https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
-FROM debian:buster-slim
-RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+# Use multi-image container for a lean container.
+FROM alpine
+RUN apk add --no-cache ca-certificates && update-ca-certificates
 
-RUN apt-get update && apt-get install -y postgresql-client
+# Install Postgres client.
+RUN apk update && apk add postgresql
 
 WORKDIR /bin
 

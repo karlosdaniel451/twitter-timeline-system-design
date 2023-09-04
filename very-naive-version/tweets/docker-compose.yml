@@ -1,21 +1,38 @@
 version: "3.8"
+
+volumes:
+  db-data:
+
+
+networks:
+  api-network:
+
+
 services:
   db:
+    container_name: "tweets_db"
     image: postgres:15.3-bullseye
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     volumes:
-      - app-db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
       - type: tmpfs
         target: /dev/shm
     ports:
       - "${DB_PORT}:5432"
+    healthcheck:
+      test: pg_isready -U ${DB_USER} -h localhost -p 5432 --timeout=5
+      interval: 6s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
     networks:
-      - app-network
+      - api-network
 
-  app:
+  api:
+    container_name: "tweets_api"
     build:
       context: ./
       dockerfile: Dockerfile
@@ -29,19 +46,9 @@ services:
     ports:
       - "${APP_PORT}:${APP_PORT}"
     depends_on:
-      - db
-    # command: bash -c "/usr/bin/psql postgresql://postgres:development@db:5432 -c 'drop database if exists tweets' && /usr/bin/psql postgresql://postgres:development@db:5432 -c 'create database tweets' && ./app/tweets"
-    # command: bash -c "/usr/bin/psql postgresql://postgres:development@db:5432 -c 'drop database if exists tweets' && /usr/bin/psql postgresql://postgres:development@db:5432 -c 'create database tweets'"
+      db:
+        condition: service_healthy
     command: >
-      bash -c "/usr/bin/psql postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}
-      -c 'drop database if exists ${DB_NAME}' && /usr/bin/psql
-      postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT} -c 'create database ${DB_NAME}'"
+      bash -c "/usr/bin/psql postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT} -c 'drop database if exists ${DB_NAME}' && /usr/bin/psql postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT} -c 'create database ${DB_NAME}'"
     networks:
-      - app-network
-
-volumes:
-  app-db-data:
-
-
-networks:
-  app-network:
+      - api-network
