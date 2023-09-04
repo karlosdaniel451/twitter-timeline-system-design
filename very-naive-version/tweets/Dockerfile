@@ -11,7 +11,7 @@ RUN go mod download
 COPY . ./
 
 # Build the executable file.
-RUN go build -v -o tweets
+RUN go build -v -o tweets ./cmd/main.go
 
 # Use the official Debian slim image for a lean production container.
 # https://hub.docker.com/_/debian

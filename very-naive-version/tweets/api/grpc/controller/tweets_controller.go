@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"tweets/api/protobuf/tweets_service"
+	"tweets/api/grpc/controller/protobuf/tweets_service"
 	"tweets/domain/models"
 	repositoryerrors "tweets/repository/repository_errors"
 	"tweets/usecase"
@@ -20,8 +20,8 @@ type TweetsController struct {
 	tweetsUseCase usecase.TweetsUseCase
 }
 
-func NewTweetsController(tweetsUseCase usecase.TweetsUseCase) *TweetsController {
-	return &TweetsController{tweetsUseCase: tweetsUseCase}
+func NewTweetsController(tweetsUseCase usecase.TweetsUseCase) TweetsController {
+	return TweetsController{tweetsUseCase: tweetsUseCase}
 }
 
 func (controller *TweetsController) PostTweet(
