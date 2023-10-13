@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"tweets/api/grpc/controller/protobuf/tweets_service"
 	"tweets/domain/models"
 	repositoryerrors "tweets/repository/repository_errors"
@@ -31,14 +32,18 @@ func (controller *TweetsController) PostTweet(
 
 	userId, err := uuid.Parse(request.GetUserId())
 	if err != nil {
-		return nil, fmt.Errorf("error when parsing tweet: invalid user_id: %s", err)
+		return nil, status.Errorf(
+			codes.InvalidArgument, fmt.Sprintf("invalid user_id uuid: %s", err),
+		)
 	}
 
 	var repliesTo uuid.UUID
 	if request.GetRepliesTo() != "" {
 		repliesTo, err = uuid.Parse(request.GetUserId())
 		if err != nil {
-			return nil, fmt.Errorf("error when parsing tweet: invalid replies_to: %s", err)
+			return nil, status.Errorf(
+				codes.InvalidArgument, fmt.Sprintf("invalid replies_to uuid: %s", err),
+			)
 		}
 	}
 
@@ -46,7 +51,9 @@ func (controller *TweetsController) PostTweet(
 	if request.GetRepliesTo() != "" {
 		quoteTo, err = uuid.Parse(request.GetUserId())
 		if err != nil {
-			return nil, fmt.Errorf("error when parsing tweet: invalid quote_to: %s", err)
+			return nil, status.Errorf(
+				codes.InvalidArgument, fmt.Sprintf("invalid quote_to uuid: %s", err),
+			)
 		}
 	}
 
@@ -59,7 +66,12 @@ func (controller *TweetsController) PostTweet(
 
 	createdTweet, err := controller.tweetsUseCase.CreateTweet(&tweet)
 	if err != nil {
-		return nil, err
+		slog.Error(
+			"internal error when creating tweet",
+			"error", err,
+			"request", request.String(),
+		)
+		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
 	response := tweets_service.PostTweetResponse{}
@@ -84,7 +96,7 @@ func (controller *TweetsController) DeleteTweetById(
 	tweetId, err := uuid.Parse(request.TweetId)
 	if err != nil {
 		return &response, status.Errorf(
-			codes.InvalidArgument, fmt.Sprintf("invalid tweet uuid: %s", err),
+			codes.InvalidArgument, fmt.Sprintf("invalid tweet_id uuid: %s", err),
 		)
 	}
 
@@ -96,7 +108,13 @@ func (controller *TweetsController) DeleteTweetById(
 				codes.NotFound, err.Error(),
 			)
 		}
-		return nil, err
+
+		slog.Error(
+			"internal error when creating tweet",
+			"error", err,
+			"request", request.String(),
+		)
+		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 	return &response, nil
 }
@@ -109,7 +127,7 @@ func (controller *TweetsController) GetTweetById(
 	tweetId, err := uuid.Parse(request.TweetId)
 	if err != nil {
 		return nil, status.Errorf(
-			codes.InvalidArgument, fmt.Sprintf("invalid tweet uuid: %s", err),
+			codes.InvalidArgument, fmt.Sprintf("invalid tweet_id uuid: %s", err),
 		)
 	}
 
@@ -121,7 +139,13 @@ func (controller *TweetsController) GetTweetById(
 				codes.NotFound, err.Error(),
 			)
 		}
-		return nil, err
+
+		slog.Error(
+			"internal error when getting tweet by id",
+			"error", err, "request",
+			request.String(),
+		)
+		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
 	response := tweets_service.GetTweetByIdResponse{}
@@ -144,7 +168,12 @@ func (controller *TweetsController) GetAllTweets(
 
 	allTweets, err := controller.tweetsUseCase.GetAllTweets()
 	if err != nil {
-		return nil, err
+		slog.Error(
+			"internal error when getting all tweets",
+			"error", err, "request",
+			request.String(),
+		)
+		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
 	response := tweets_service.GetAllTweetsResponse{}
@@ -171,7 +200,7 @@ func (controller *TweetsController) GetTweetsOfUser(
 	userId, err := uuid.Parse(request.GetUserId())
 	if err != nil {
 		return nil, status.Errorf(
-			codes.InvalidArgument, fmt.Sprintf("invalid user uuid: %s", err),
+			codes.InvalidArgument, fmt.Sprintf("invalid user_id uuid: %s", err),
 		)
 	}
 
@@ -183,7 +212,12 @@ func (controller *TweetsController) GetTweetsOfUser(
 				codes.NotFound, err.Error(),
 			)
 		}
-		return nil, err
+		slog.Error(
+			"internal error when getting tweets of user",
+			"error", err,
+			"request", request.String(),
+		)
+		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
 	response := tweets_service.GetTweetsOfUserResponse{}

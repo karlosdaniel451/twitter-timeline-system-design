@@ -1,7 +1,8 @@
 package setup
 
 import (
-	"log"
+	"log/slog"
+	"os"
 	"tweets/api/grpc/controller"
 	"tweets/api/grpc/controller/protobuf/tweets_service"
 	"tweets/db"
@@ -24,15 +25,22 @@ var (
 func Setup() {
 	assertInterfaces()
 
+	setupLogger()
+
 	// Try to connect to the database server.
 	if err := db.Connect(); err != nil {
-		log.Fatalf("error: failed to connect to database: %s", err)
+		slog.Error("failed to connect to database", "error", err)
 	}
 
 	// Setup for Tweets.
 	TweetsRepository = repository.NewTweetRepositoryDB(db.DB)
 	TweetsUseCase = usecase.NewTweetsUseCaseImpl(TweetsRepository)
 	TweetsController = controller.NewTweetsController(TweetsUseCase)
+}
+
+func setupLogger() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 }
 
 func assertInterfaces() {

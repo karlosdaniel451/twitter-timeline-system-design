@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"tweets/api/grpc/controller/protobuf/tweets_service"
@@ -23,13 +23,14 @@ func main() {
 	// Start TCP connection listener.
 	listener, err := net.Listen("tcp", ":"+portNumber)
 	if err != nil {
-		log.Fatalf("error: failed to listen to %s: %s", portNumber, err)
+		slog.Error("failed to listen to "+portNumber, "error", err)
 	}
 
 	// Create the gRPC server. But does not accept any RPCs and it has no gRPC service yet.
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		logging.UnaryServerInterceptor(config.InterceptorLogger(config.GetLogConfig())),
-		
+		logging.UnaryServerInterceptor(
+			config.InterceptorLogger(slog.Default()), config.GetLogOptions()...,
+		),
 	))
 
 	// Register the TwitterService implementation to the gRPC server.
@@ -39,11 +40,13 @@ func main() {
 	// Source: https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflection-tutorial.md
 	reflection.Register(grpcServer)
 
-
 	// Start gRCP server on the TCP listener and block execution in the call to Serve().
-	log.Printf("starting gRPC server at %s\n", listener.Addr())
+	slog.Error("starting gRPC server at " + listener.Addr().String())
 	err = grpcServer.Serve(listener)
 	if err != nil {
-		log.Fatalf("error: failed to start gRPC server at %s: %s", listener.Addr(), err)
+		slog.Error(
+			"failed to start gRPC server at "+listener.Addr().String(),
+			"error", err,
+		)
 	}
 }
