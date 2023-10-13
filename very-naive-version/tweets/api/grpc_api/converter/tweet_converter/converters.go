@@ -2,7 +2,7 @@ package tweet_converter
 
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"tweets/api/grpc/controller/protobuf/tweets_service"
+	"tweets/api/grpc_api/protobuf/tweets_service"
 	"tweets/domain/models"
 )
 

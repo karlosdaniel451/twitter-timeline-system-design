@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"tweets/api/grpc/controller/protobuf/tweets_service"
-	"tweets/api/grpc/converter/tweet_converter"
+	"tweets/api/grpc_api/converter/tweet_converter"
+	tweets_service2 "tweets/api/grpc_api/protobuf/tweets_service"
 	"tweets/domain/models"
 	repositoryerrors "tweets/repository/repository_errors"
 	"tweets/usecase"
@@ -17,7 +17,7 @@ import (
 )
 
 type TweetsController struct {
-	tweets_service.UnimplementedTweetsServiceServer
+	tweets_service2.UnimplementedTweetsServiceServer
 	tweetsUseCase usecase.TweetsUseCase
 }
 
@@ -27,8 +27,8 @@ func NewTweetsController(tweetsUseCase usecase.TweetsUseCase) TweetsController {
 
 func (controller *TweetsController) PostTweet(
 	ctx context.Context,
-	request *tweets_service.PostTweetRequest,
-) (*tweets_service.PostTweetResponse, error) {
+	request *tweets_service2.PostTweetRequest,
+) (*tweets_service2.PostTweetResponse, error) {
 
 	userId, err := uuid.Parse(request.GetUserId())
 	if err != nil {
@@ -74,7 +74,7 @@ func (controller *TweetsController) PostTweet(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service.PostTweetResponse{
+	response := tweets_service2.PostTweetResponse{
 		Tweet: tweet_converter.FromDatabaseModelToProtobufModel(createdTweet),
 	}
 
@@ -83,10 +83,10 @@ func (controller *TweetsController) PostTweet(
 
 func (controller *TweetsController) DeleteTweetById(
 	ctx context.Context,
-	request *tweets_service.DeleteTweetByIdRequest,
-) (*tweets_service.DeleteTweetByIdResponse, error) {
+	request *tweets_service2.DeleteTweetByIdRequest,
+) (*tweets_service2.DeleteTweetByIdResponse, error) {
 
-	response := tweets_service.DeleteTweetByIdResponse{}
+	response := tweets_service2.DeleteTweetByIdResponse{}
 	tweetId, err := uuid.Parse(request.TweetId)
 	if err != nil {
 		return &response, status.Errorf(
@@ -115,8 +115,8 @@ func (controller *TweetsController) DeleteTweetById(
 
 func (controller *TweetsController) GetTweetById(
 	ctx context.Context,
-	request *tweets_service.GetTweetByIdRequest,
-) (*tweets_service.GetTweetByIdResponse, error) {
+	request *tweets_service2.GetTweetByIdRequest,
+) (*tweets_service2.GetTweetByIdResponse, error) {
 
 	tweetId, err := uuid.Parse(request.TweetId)
 	if err != nil {
@@ -142,7 +142,7 @@ func (controller *TweetsController) GetTweetById(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service.GetTweetByIdResponse{
+	response := tweets_service2.GetTweetByIdResponse{
 		Tweet: tweet_converter.FromDatabaseModelToProtobufModel(tweet),
 	}
 
@@ -151,8 +151,8 @@ func (controller *TweetsController) GetTweetById(
 
 func (controller *TweetsController) GetAllTweets(
 	ctx context.Context,
-	request *tweets_service.GetAllTweetsRequest,
-) (*tweets_service.GetAllTweetsResponse, error) {
+	request *tweets_service2.GetAllTweetsRequest,
+) (*tweets_service2.GetAllTweetsResponse, error) {
 
 	allTweets, err := controller.tweetsUseCase.GetAllTweets()
 	if err != nil {
@@ -164,7 +164,7 @@ func (controller *TweetsController) GetAllTweets(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service.GetAllTweetsResponse{
+	response := tweets_service2.GetAllTweetsResponse{
 		Tweets: tweet_converter.FromDatabaseModelsToProtobufModels(allTweets),
 	}
 
@@ -173,8 +173,8 @@ func (controller *TweetsController) GetAllTweets(
 
 func (controller *TweetsController) GetTweetsOfUser(
 	ctx context.Context,
-	request *tweets_service.GetTweetsOfUserRequest,
-) (*tweets_service.GetTweetsOfUserResponse, error) {
+	request *tweets_service2.GetTweetsOfUserRequest,
+) (*tweets_service2.GetTweetsOfUserResponse, error) {
 
 	userId, err := uuid.Parse(request.GetUserId())
 	if err != nil {
@@ -199,7 +199,7 @@ func (controller *TweetsController) GetTweetsOfUser(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service.GetTweetsOfUserResponse{
+	response := tweets_service2.GetTweetsOfUserResponse{
 		Tweets: tweet_converter.FromDatabaseModelsToProtobufModels(tweets),
 	}
 

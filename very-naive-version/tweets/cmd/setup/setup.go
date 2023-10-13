@@ -3,8 +3,8 @@ package setup
 import (
 	"log/slog"
 	"os"
-	"tweets/api/grpc/controller"
-	"tweets/api/grpc/controller/protobuf/tweets_service"
+	"tweets/api/grpc_api/controller"
+	"tweets/api/grpc_api/protobuf/tweets_service"
 	"tweets/db"
 	"tweets/repository"
 	repositoryerrors "tweets/repository/repository_errors"
