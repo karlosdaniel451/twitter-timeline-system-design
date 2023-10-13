@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
@@ -10,7 +11,8 @@ import (
 )
 
 var (
-	portNumber = os.Getenv("APP_PORT")
+	portNumberUnparsed     = os.Getenv("APP_PORT")
+	appEnvironmentUnparsed = os.Getenv("APP_ENVIRONMENT")
 )
 
 func main() {
@@ -35,6 +37,8 @@ func main() {
 	}
 
 	appConfig := config.NewAppConfig(portNumber, appEnvironment)
+
+	fmt.Printf("App config params:\n%s\n", *appConfig)
 
 	if err = grpc_api.StartApp(*appConfig); err != nil {
 		slog.Error(

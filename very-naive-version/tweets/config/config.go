@@ -17,6 +17,13 @@ func NewAppConfig(listenerPort int, appEnvironment AppEnvironment) *AppConfig {
 	}
 }
 
+func (a AppConfig) String() string {
+	return fmt.Sprintf(
+		"ListenerPort: %d\nAppEnvironment: %s",
+		a.ListenerPort, a.AppEnvironment,
+	)
+}
+
 type AppEnvironment int
 
 const (
