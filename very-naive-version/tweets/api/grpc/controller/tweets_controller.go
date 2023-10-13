@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"tweets/api/grpc/controller/protobuf/tweets_service"
+	"tweets/api/grpc/converter/tweet_converter"
 	"tweets/domain/models"
 	repositoryerrors "tweets/repository/repository_errors"
 	"tweets/usecase"
@@ -13,7 +14,6 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type TweetsController struct {
@@ -74,14 +74,8 @@ func (controller *TweetsController) PostTweet(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service.PostTweetResponse{}
-	response.Tweet = &tweets_service.Tweet{
-		Id:        createdTweet.Id.String(),
-		Text:      createdTweet.Text,
-		UserId:    createdTweet.UserId.String(),
-		RepliesTo: createdTweet.RepliesTo.String(),
-		QuoteTo:   tweet.QuoteTo.String(),
-		CreatedAt: timestamppb.New(createdTweet.CreatedAt),
+	response := tweets_service.PostTweetResponse{
+		Tweet: tweet_converter.FromDatabaseModelToProtobufModel(createdTweet),
 	}
 
 	return &response, nil
@@ -148,14 +142,8 @@ func (controller *TweetsController) GetTweetById(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service.GetTweetByIdResponse{}
-	response.Tweet = &tweets_service.Tweet{
-		Id:        tweet.Id.String(),
-		Text:      tweet.Text,
-		UserId:    tweet.UserId.String(),
-		RepliesTo: tweet.RepliesTo.String(),
-		QuoteTo:   tweet.QuoteTo.String(),
-		CreatedAt: timestamppb.New(tweet.CreatedAt),
+	response := tweets_service.GetTweetByIdResponse{
+		Tweet: tweet_converter.FromDatabaseModelToProtobufModel(tweet),
 	}
 
 	return &response, nil
@@ -176,17 +164,8 @@ func (controller *TweetsController) GetAllTweets(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service.GetAllTweetsResponse{}
-
-	for _, tweet := range allTweets {
-		response.Tweets = append(response.Tweets, &tweets_service.Tweet{
-			Id:        tweet.Id.String(),
-			Text:      tweet.Text,
-			UserId:    tweet.UserId.String(),
-			RepliesTo: tweet.RepliesTo.String(),
-			QuoteTo:   tweet.QuoteTo.String(),
-			CreatedAt: timestamppb.New(tweet.CreatedAt),
-		})
+	response := tweets_service.GetAllTweetsResponse{
+		Tweets: tweet_converter.FromDatabaseModelsToProtobufModels(allTweets),
 	}
 
 	return &response, nil
@@ -220,17 +199,8 @@ func (controller *TweetsController) GetTweetsOfUser(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service.GetTweetsOfUserResponse{}
-
-	for _, tweet := range tweets {
-		response.Tweets = append(response.Tweets, &tweets_service.Tweet{
-			Id:        tweet.Id.String(),
-			Text:      tweet.Text,
-			UserId:    tweet.UserId.String(),
-			RepliesTo: tweet.RepliesTo.String(),
-			QuoteTo:   tweet.QuoteTo.String(),
-			CreatedAt: timestamppb.New(tweet.CreatedAt),
-		})
+	response := tweets_service.GetTweetsOfUserResponse{
+		Tweets: tweet_converter.FromDatabaseModelsToProtobufModels(tweets),
 	}
 
 	return &response, nil
