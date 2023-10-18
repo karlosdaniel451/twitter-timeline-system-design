@@ -10,6 +10,7 @@ import (
 	"tweets/domain/models"
 	"tweets/errs"
 	"tweets/usecase"
+	"tweets/utils"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -58,10 +59,10 @@ func (controller *TweetsController) PostTweet(
 	}
 
 	tweet := models.Tweet{
-		Text:      request.GetText(),
-		UserId:    userId,
-		RepliesTo: repliesTo,
-		QuoteTo:   quoteTo,
+		Text:      utils.ValueToPointer[string](request.GetText()),
+		UserId:    &userId,
+		RepliesTo: &repliesTo,
+		QuoteTo:   &quoteTo,
 	}
 
 	createdTweet, err := controller.tweetsUseCase.CreateTweet(&tweet)
@@ -96,7 +97,7 @@ func (controller *TweetsController) DeleteTweetById(
 
 	err = controller.tweetsUseCase.DeleteTweetById(tweetId)
 	if err != nil {
-		var errNotFound *repositoryerrors.ErrorNotFound
+		var errNotFound *errs.ErrorNotFound
 		if errors.As(err, &errNotFound) {
 			return nil, status.Errorf(
 				codes.NotFound, err.Error(),
@@ -127,7 +128,7 @@ func (controller *TweetsController) GetTweetById(
 
 	tweet, err := controller.tweetsUseCase.GetTweetById(tweetId)
 	if err != nil {
-		var errNotFound *repositoryerrors.ErrorNotFound
+		var errNotFound *errs.ErrorNotFound
 		if errors.As(err, &errNotFound) {
 			return nil, status.Errorf(
 				codes.NotFound, err.Error(),
@@ -185,7 +186,7 @@ func (controller *TweetsController) GetTweetsOfUser(
 
 	tweets, err := controller.tweetsUseCase.GetTweetOfUser(userId)
 	if err != nil {
-		var errNotFound *repositoryerrors.ErrorNotFound
+		var errNotFound *errs.ErrorNotFound
 		if errors.As(err, &errNotFound) {
 			return nil, status.Errorf(
 				codes.NotFound, err.Error(),

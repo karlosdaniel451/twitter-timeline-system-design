@@ -2,9 +2,6 @@ package repository
 
 import (
 	"fmt"
-	"tweets/domain/models"
-	repositoryerrors "tweets/repository/repository_errors"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"tweets/domain/models"
@@ -88,7 +85,7 @@ func (repository TweetRepositoryDB) GetTweetById(id uuid.UUID) (*models.Tweet, e
 	result := repository.db.First(&tweet, "id = ?", id)
 	if result.Error != nil {
 		if result.Error.Error() == gorm.ErrRecordNotFound.Error() {
-			return nil, &repositoryerrors.ErrorNotFound{
+			return nil, &errs.ErrorNotFound{
 				Msg: fmt.Sprintf("there is no tweet with id %s", id.String()),
 			}
 		}
