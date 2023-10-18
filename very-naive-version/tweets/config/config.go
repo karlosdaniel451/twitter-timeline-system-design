@@ -6,14 +6,19 @@ import (
 )
 
 type AppConfig struct {
-	ListenerPort   int
-	AppEnvironment AppEnvironment
+	ListenerPort       int
+	AppEnvironmentType AppEnvironmentType
+	DatabaseHost       string
+	DatabaseUser       string
+	DatabasePort       int
+	DatabaseName       string
+	DatabasePassword   string
 }
 
-func NewAppConfig(listenerPort int, appEnvironment AppEnvironment) *AppConfig {
+func NewAppConfig(listenerPort int, appEnvironment AppEnvironmentType) *AppConfig {
 	return &AppConfig{
-		ListenerPort:   listenerPort,
-		AppEnvironment: appEnvironment,
+		ListenerPort:       listenerPort,
+		AppEnvironmentType: appEnvironment,
 	}
 }
 

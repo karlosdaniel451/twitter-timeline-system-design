@@ -10,33 +10,13 @@ import (
 	"tweets/config"
 )
 
-var (
-	portNumberUnparsed     = os.Getenv("APP_PORT")
-	appEnvironmentUnparsed = os.Getenv("APP_ENVIRONMENT")
-)
-
 func main() {
-	setup.Setup()
+	appConfig := config.NewEmptyAppConfig()
 
-	// Config params.
-	var (
-		portNumber     int
-		appEnvironment config.AppEnvironment
-	)
-
-	portNumber, err := strconv.Atoi(portNumberUnparsed)
-	if err != nil {
-		slog.Error("invalid config params: invalid port number", "error", err)
+	if err := setup.Setup(appConfig); err != nil {
+		slog.Error("error when setting up application", "error", err)
 		os.Exit(1)
 	}
-
-	appEnvironment, err = config.ParseAppEnvironment(appEnvironmentUnparsed)
-	if err != nil {
-		slog.Error("invalid config params: invalid app environment", "error", err)
-		os.Exit(1)
-	}
-
-	appConfig := config.NewAppConfig(portNumber, appEnvironment)
 
 	fmt.Printf("App config params:\n%s\n", *appConfig)
 
@@ -45,5 +25,6 @@ func main() {
 			"failed to start gRPC server at "+portNumberUnparsed,
 			"error", err,
 		)
+		os.Exit(1)
 	}
 }

@@ -6,6 +6,8 @@ require github.com/google/uuid v1.3.0
 
 require gorm.io/gorm v1.25.2
 
+require github.com/joho/godotenv v1.5.1 // indirect
+
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect

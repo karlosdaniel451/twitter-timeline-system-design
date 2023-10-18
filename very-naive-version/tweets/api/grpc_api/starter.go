@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"tweets/api/grpc_api/middleware"
 	"tweets/api/grpc_api/protobuf/tweets_service"
+	"tweets/api/grpc_api/protobuf/users_service"
 	"tweets/cmd/setup"
 	"tweets/config"
 )
@@ -17,8 +18,11 @@ func StartApp(config config.AppConfig) error {
 	// Create the gRPC server with no service and thus incapable of accept RPCs.
 	grpcServer := grpc.NewServer(middleware.GetUnaryMiddlewares())
 
-	// Register the TwitterService implementation to the gRPC server.
+	// Register the TweetsService implementation to the gRPC server.
 	tweets_service.RegisterTweetsServiceServer(grpcServer, &setup.TweetsController)
+
+	// Register the UsersService implementation to the gRPC server.
+	users_service.RegisterUsersServiceServer(grpcServer, &setup.UsersController)
 
 	// Enable server reflection to be used by tools like gRPCurl.
 	// Source: https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflection-tutorial.md
@@ -35,7 +39,7 @@ func StartApp(config config.AppConfig) error {
 	}
 
 	// Start gRCP server on the TCP listener and block execution in the call to Serve().
-	slog.Error("starting gRPC server at " + listener.Addr().String())
+	slog.Info("starting gRPC server at " + listener.Addr().String())
 	err = grpcServer.Serve(listener)
 	if err != nil {
 		return fmt.Errorf(
