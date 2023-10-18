@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+option go_package = "./users_service";
+
+import "google/protobuf/timestamp.proto";
+
+service UsersService {
+  rpc SignUp (SignUpRequest) returns (SignUpResponse);
+  rpc FollowUser (FollowUserRequest) returns (FollowUserResponse);
+  rpc UnfollowUser (UnfollowUserRequest) returns (UnfollowUserResponse);
+  rpc DeleteUserById(DeleteUserByIdRequest) returns (DeleteUserByIdResponse);
+  rpc GetUserById (GetUserByIdRequest) returns (GetUserByIdResponse);
+  rpc GetAllUsers (GetAllUsersRequest) returns (GetAllUsersResponse);
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string user_name = 3;
+  string email = 4;
+  string description = 5;
+  string location = 6;
+  string pinned_tweet = 7;
+  string profile_image_url = 8;
+  bool protected = 9;
+  PublicMetrics public_metrics = 10;
+  string url = 11;
+  bool  verified = 12;
+  string most_recent_tweet = 13;
+  repeated string followed_user_ids = 14;
+  repeated string follower_user_ids = 15;
+  google.protobuf.Timestamp created_at = 16;
+  google.protobuf.Timestamp updated_at = 17;
+  google.protobuf.Timestamp deleted_at = 18;
+}
+
+message PublicMetrics {
+  uint64 followers_count = 1;
+  uint64 following_count = 2;
+  uint64 tweet_count = 3;
+  uint64  listed_count = 4;
+}
+
+message Follow {
+  string follower_id = 1;
+  string followee_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  google.protobuf.Timestamp deleted_at = 5;
+}
+
+message SignUpRequest {
+  string name = 2;
+  string user_name = 3;
+  string email = 4;
+  string description = 5;
+  string location = 6;
+  string pinned_tweet = 7;
+  string profile_image_url = 8;
+  bool protected = 9;
+  string url = 10;
+  bool  verified = 11;
+  string most_recent_tweet = 12;
+}
+
+message SignUpResponse {
+  User user = 1;
+}
+
+message FollowUserRequest {
+  string follower_id = 1;
+  string followee_id = 2;
+}
+
+message FollowUserResponse {
+  Follow follow = 1;
+}
+
+message UnfollowUserRequest {
+  string follower_id = 1;
+  string followee_id = 2;
+}
+
+message UnfollowUserResponse {}
+
+message DeleteUserByIdRequest {
+  string user_id = 1;
+}
+
+message DeleteUserByIdResponse {}
+
+message GetUserByIdRequest {
+  string user_id = 1;
+}
+
+message GetUserByIdResponse {
+  User user = 1;
+}
+
+message GetAllUsersRequest {}
+
+message GetAllUsersResponse {
+  repeated User users = 1;
+}
