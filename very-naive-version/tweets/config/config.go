@@ -17,29 +17,36 @@ func NewAppConfig(listenerPort int, appEnvironment AppEnvironment) *AppConfig {
 	}
 }
 
+func NewEmptyAppConfig() *AppConfig {
+	return &AppConfig{}
+}
+
 func (a AppConfig) String() string {
 	return fmt.Sprintf(
 		"ListenerPort: %d\nAppEnvironment: %s",
-		a.ListenerPort, a.AppEnvironment,
+		a.ListenerPort, a.AppEnvironmentType.String(),
 	)
 }
 
-type AppEnvironment int
+type AppEnvironmentType int
 
 const (
-	Development AppEnvironment = iota
+	Development AppEnvironmentType = iota
+	Debugging
 	Testing
 	Production
 )
 
-// ParseAppEnvironment parses an AppEnvironment enum value from its string
+// ParseAppEnvironmentType parses an AppEnvironmentType enum value from its string
 // representation. If an empty string is passed, then it returns Development.
-func ParseAppEnvironment(environmentUnparsed string) (AppEnvironment, error) {
-	switch strings.ToLower(environmentUnparsed) {
+func ParseAppEnvironmentType(envTypeUnparsed string) (AppEnvironmentType, error) {
+	switch strings.ToLower(envTypeUnparsed) {
 	case "":
 		return Development, nil
 	case "development":
 		return Development, nil
+	case "debugging":
+		return Debugging, nil
 	case "testing":
 		return Testing, nil
 	case "production":
@@ -49,10 +56,12 @@ func ParseAppEnvironment(environmentUnparsed string) (AppEnvironment, error) {
 	}
 }
 
-func (appEnv AppEnvironment) String() string {
+func (appEnv AppEnvironmentType) String() string {
 	switch appEnv {
 	case Development:
 		return "Development"
+	case Debugging:
+		return "Debugging"
 	case Testing:
 		return "Testing"
 	case Production:
