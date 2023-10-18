@@ -9,6 +9,7 @@ import (
 	"tweets/api/grpc_api/controller"
 	"tweets/api/grpc_api/protobuf/tweets_service"
 	"tweets/db"
+	"tweets/errs"
 	"tweets/repository"
 	repositoryerrors "tweets/repository/repository_errors"
 	"tweets/usecase"
@@ -90,5 +91,7 @@ func setupLogger() {
 func assertInterfaces() {
 	var _ tweets_service.TweetsServiceServer = &controller.TweetsController{}
 	var _ repository.TweetRepository = &repository.TweetRepositoryDB{}
-	var _ error = &repositoryerrors.ErrorNotFound{}
+
+	// Assertions for custom errors.
+	var _ error = &errs.ErrorNotFound{}
 }

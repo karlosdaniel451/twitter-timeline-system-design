@@ -7,6 +7,8 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"tweets/domain/models"
+	"tweets/errs"
 )
 
 type TweetRepository interface {
@@ -102,7 +104,7 @@ func (repository TweetRepositoryDB) DeleteTweetById(id uuid.UUID) error {
 	result := repository.db.First(&tweet, id)
 	if result.Error != nil {
 		if result.Error.Error() == gorm.ErrRecordNotFound.Error() {
-			return &repositoryerrors.ErrorNotFound{
+			return &errs.ErrorNotFound{
 				Msg: fmt.Sprintf("there is no tweet with id %s", id.String()),
 			}
 		}

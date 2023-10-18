@@ -8,7 +8,7 @@ import (
 	"tweets/api/grpc_api/converter/tweet_converter"
 	tweets_service2 "tweets/api/grpc_api/protobuf/tweets_service"
 	"tweets/domain/models"
-	repositoryerrors "tweets/repository/repository_errors"
+	"tweets/errs"
 	"tweets/usecase"
 
 	"github.com/google/uuid"
