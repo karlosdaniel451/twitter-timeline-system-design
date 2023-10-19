@@ -38,11 +38,11 @@ func (useCase UsersUseCaseImpl) FollowUser(
 
 	followExist, err := useCase.DoesUserFollow(followerId, followeeId)
 	if err != nil {
-		return nil, fmt.Errorf("error when checking if follow already exists")
+		return nil, fmt.Errorf("error when checking if follow already exists: %s", err)
 	}
 
 	if followExist {
-		return nil, &errs.ErrorUserAlreadyFollow{}
+		return nil, errs.ErrorUserAlreadyFollow{}
 	}
 
 	return useCase.usersRepository.FollowUser(followerId, followeeId)
@@ -54,8 +54,8 @@ func (useCase UsersUseCaseImpl) UnfollowUser(followerId, followeeId uuid.UUID) e
 		return fmt.Errorf("error when checking if follow already exists")
 	}
 
-	if followExist {
-		return &errs.ErrorUserDoesNotFollow{}
+	if !followExist {
+		return errs.ErrorUserDoesNotFollow{}
 	}
 
 	return useCase.usersRepository.UnfollowUser(followerId, followeeId)

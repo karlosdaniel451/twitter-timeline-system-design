@@ -1,12 +1,36 @@
 syntax = "proto3";
 
-option go_package = "./tweets_service";
-
 import "google/protobuf/timestamp.proto";
+/*
+import "google/api/annotations.proto";
+*/
+
+option go_package = "./tweets_service";
+/*
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Tweet RESTful API gateway from original gRPC API";
+    version: "0.1";
+    contact: {
+      name: "Karlos Daniel Pires da Silva";
+      url: "https://github.com/karlosdaniel451/twitter-timeline-system-design";
+    };
+  };
+*/
 
 service TweetsService {
+  /*
+    rpc PostTweet (PostTweetRequest) returns (PostTweetResponse) {
+       option (google.api.http) = {
+        post: "/v1/example/echo"
+        body: "*"
+      };
+    }
+  */
   rpc PostTweet (PostTweetRequest) returns (PostTweetResponse);
   rpc DeleteTweetById(DeleteTweetByIdRequest) returns (DeleteTweetByIdResponse);
+  rpc LikeTweet(LikeTweetRequest) returns (LikeTweetRequest);
+
   rpc GetTweetById (GetTweetByIdRequest) returns (GetTweetByIdResponse);
   rpc GetAllTweets (GetAllTweetsRequest) returns (GetAllTweetsResponse);
   rpc GetTweetsOfUser (GetTweetsOfUserRequest) returns (GetTweetsOfUserResponse);
@@ -37,6 +61,14 @@ message DeleteTweetByIdRequest {
 }
 
 message DeleteTweetByIdResponse {}
+
+message LikeTweetRequest{
+  string tweet_id = 1;
+}
+
+message LikeTweetResponse {
+  string tweet_id = 1;
+}
 
 message GetTweetByIdRequest {
   string tweet_id = 1;

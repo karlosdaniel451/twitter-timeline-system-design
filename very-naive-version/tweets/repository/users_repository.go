@@ -46,8 +46,8 @@ func (repository UserRepositoryDB) FollowUser(
 	follower, err := repository.GetUserById(followerId)
 	if err != nil {
 		if errors.As(err, &gorm.ErrRecordNotFound) {
-			return nil, &errs.ErrorNotFound{
-				Msg: fmt.Sprintf("there is no user with id %s", followeeId.String()),
+			return nil, errs.ErrorNotFound{
+				Msg: fmt.Sprintf("there is no user with id %s", followerId.String()),
 			}
 		}
 		return nil, err
@@ -56,7 +56,7 @@ func (repository UserRepositoryDB) FollowUser(
 	followee, err := repository.GetUserById(followeeId)
 	if err != nil {
 		if errors.As(err, &gorm.ErrRecordNotFound) {
-			return nil, &errs.ErrorNotFound{
+			return nil, errs.ErrorNotFound{
 				Msg: fmt.Sprintf("there is no user with id %s", followeeId.String()),
 			}
 		}
@@ -68,8 +68,20 @@ func (repository UserRepositoryDB) FollowUser(
 		FolloweeId: followeeId,
 	}
 
-	if err = repository.db.Create(&follow).Error; err != nil {
+	// In case the Follow record was to be created was soft-deleted, that is,
+	// it should be restored.
+	result := repository.db.Unscoped().Model(&models.Follow{}).
+		Where(&follow).Update("deleted_at", nil)
+
+	if result.Error != nil {
 		return nil, err
+	}
+
+	// If the Follow record was not soft-deleted.
+	if result.RowsAffected != 1 {
+		if err = repository.db.Create(&follow).Error; err != nil {
+			return nil, err
+		}
 	}
 
 	follower.PublicMetrics.FollowingCount++
@@ -100,7 +112,7 @@ func (repository UserRepositoryDB) UnfollowUser(
 	follower, err := repository.GetUserById(followerId)
 	if err != nil {
 		if errors.As(err, &gorm.ErrRecordNotFound) {
-			return &errs.ErrorNotFound{
+			return errs.ErrorNotFound{
 				Msg: fmt.Sprintf("there is no user with id %s", followeeId.String()),
 			}
 		}
@@ -110,7 +122,7 @@ func (repository UserRepositoryDB) UnfollowUser(
 	followee, err := repository.GetUserById(followeeId)
 	if err != nil {
 		if errors.As(err, &gorm.ErrRecordNotFound) {
-			return &errs.ErrorNotFound{
+			return errs.ErrorNotFound{
 				Msg: fmt.Sprintf("there is no user with id %s", followeeId.String()),
 			}
 		}
@@ -146,11 +158,11 @@ func (repository UserRepositoryDB) DoesUserFollow(
 	followeeId uuid.UUID,
 ) (bool, error) {
 
-	if err := repository.db.Find(&models.Follow{
+	if err := repository.db.First(&models.Follow{
 		FollowerId: followerId,
 		FolloweeId: followeeId,
 	}).Error; err != nil {
-		if errors.Is(err, &errs.ErrorNotFound{}) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
 
@@ -187,6 +199,11 @@ func (repository UserRepositoryDB) GetUserById(id uuid.UUID) (*models.User, erro
 	//	Preload("User.Followees").Find(&user, id)
 	result := repository.db.First(&user, id)
 	if result.Error != nil {
+		if errors.As(result.Error, &gorm.ErrRecordNotFound) {
+			return nil, errs.ErrorNotFound{
+				Msg: fmt.Sprintf("there is no user with id %s", id.String()),
+			}
+		}
 		return nil, result.Error
 	}
 

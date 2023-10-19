@@ -69,11 +69,11 @@ func (controller *UsersController) FollowUser(
 
 	createdFollow, err := controller.usersUseCase.FollowUser(followerId, followeeId)
 	if err != nil {
-		if errors.Is(err, &errs.ErrorNotFound{}) {
+		if errors.As(err, &errs.ErrorNotFound{}) {
 			return nil, status.Errorf(codes.NotFound, err.Error())
 		}
 
-		if errors.Is(err, &errs.ErrorUserAlreadyFollow{}) {
+		if errors.As(err, &errs.ErrorUserAlreadyFollow{}) {
 			return nil, status.Errorf(
 				codes.AlreadyExists,
 				"user with id %s already follow user with id %s",
@@ -107,7 +107,7 @@ func (controller *UsersController) UnfollowUser(
 		)
 	}
 
-	followeeId, err := uuid.Parse(request.GetFollowerId())
+	followeeId, err := uuid.Parse(request.GetFolloweeId())
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument, fmt.Sprintf("invalid followee_id uuid: %s", err),
@@ -115,14 +115,14 @@ func (controller *UsersController) UnfollowUser(
 	}
 
 	if err = controller.usersUseCase.UnfollowUser(followerId, followeeId); err != nil {
-		if errors.Is(err, &errs.ErrorNotFound{}) {
+		if errors.As(err, &errs.ErrorNotFound{}) {
 			return nil, status.Errorf(codes.NotFound, err.Error())
 		}
 
-		if errors.Is(err, &errs.ErrorUserDoesNotFollow{}) {
+		if errors.As(err, &errs.ErrorUserDoesNotFollow{}) {
 			return nil, status.Errorf(
-				codes.AlreadyExists,
-				"user with id %s already does not follow user with id %s",
+				codes.NotFound,
+				"user with id %s does not follow user with id %s",
 				followerId, followeeId,
 			)
 		}
@@ -153,7 +153,7 @@ func (controller *UsersController) GetUserById(
 
 	user, err := controller.usersUseCase.GetUserById(userId)
 	if err != nil {
-		if errors.Is(err, &errs.ErrorNotFound{}) {
+		if errors.As(err, &errs.ErrorNotFound{}) {
 			return nil, status.Errorf(
 				codes.NotFound, err.Error(),
 			)

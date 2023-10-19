@@ -8,21 +8,25 @@ import (
 	"strconv"
 	"tweets/api/grpc_api/controller"
 	"tweets/api/grpc_api/protobuf/tweets_service"
+	"tweets/api/grpc_api/protobuf/users_service"
+	"tweets/config"
 	"tweets/db"
 	"tweets/errs"
 	"tweets/repository"
-	repositoryerrors "tweets/repository/repository_errors"
 	"tweets/usecase"
 )
 
 var (
 	// Repositories
+	UsersRepository  repository.UserRepository
 	TweetsRepository repository.TweetRepository
 
 	// Usecases
+	UsersUseCase  usecase.UsersUseCase
 	TweetsUseCase usecase.TweetsUseCase
 
 	// API Controllers
+	UsersController  controller.UsersController
 	TweetsController controller.TweetsController
 )
 
@@ -38,6 +42,11 @@ func Setup(appConfig *config.AppConfig) error {
 	if err := db.Connect(*appConfig); err != nil {
 		return fmt.Errorf("failed to connect to database: %s", err)
 	}
+
+	// Setup for Users.
+	UsersRepository = repository.NewUserRepositoryDB(db.DB)
+	UsersUseCase = usecase.NewUsersUseCaseImpl(UsersRepository)
+	UsersController = controller.NewUsersController(UsersUseCase)
 
 	// Setup for Tweets.
 	TweetsRepository = repository.NewTweetRepositoryDB(db.DB)
@@ -89,6 +98,11 @@ func setupLogger() {
 }
 
 func assertInterfaces() {
+	// Assertions for Users.
+	var _ users_service.UsersServiceServer = &controller.UsersController{}
+	var _ repository.UserRepository = &repository.UserRepositoryDB{}
+
+	// Assertions for Tweets.
 	var _ tweets_service.TweetsServiceServer = &controller.TweetsController{}
 	var _ repository.TweetRepository = &repository.TweetRepositoryDB{}
 
