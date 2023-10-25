@@ -4,21 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-	"tweets/api/grpc_api/converter/tweet_converter"
-	tweets_service2 "tweets/api/grpc_api/protobuf/tweets_service"
-	"tweets/domain/models"
-	"tweets/errs"
-	"tweets/usecase"
-	"tweets/utils"
-
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"log/slog"
+	"tweets/api/grpc_api/converter/tweet_converter"
+	tweetsService "tweets/api/grpc_api/protobuf/tweets_service"
+	"tweets/errs"
+	"tweets/usecase"
 )
 
 type TweetsController struct {
-	tweets_service2.UnimplementedTweetsServiceServer
+	tweetsService.UnimplementedTweetsServiceServer
 	tweetsUseCase usecase.TweetsUseCase
 }
 
@@ -28,19 +25,30 @@ func NewTweetsController(tweetsUseCase usecase.TweetsUseCase) TweetsController {
 
 func (controller *TweetsController) PostTweet(
 	ctx context.Context,
-	request *tweets_service2.PostTweetRequest,
-) (*tweets_service2.PostTweetResponse, error) {
+	request *tweetsService.PostTweetRequest,
+) (*tweetsService.PostTweetResponse, error) {
 
-	userId, err := uuid.Parse(request.GetUserId())
+	if request.GetUserId() == "" {
+		return nil, status.Errorf(
+			codes.InvalidArgument, "user_id field is required",
+		)
+	}
+
+	if request.Text == "" {
+		return nil, status.Errorf(
+			codes.InvalidArgument, "text field is required",
+		)
+	}
+
+	_, err := uuid.Parse(request.GetUserId())
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument, fmt.Sprintf("invalid user_id uuid: %s", err),
 		)
 	}
 
-	var repliesTo uuid.UUID
 	if request.GetRepliesTo() != "" {
-		repliesTo, err = uuid.Parse(request.GetUserId())
+		_, err := uuid.Parse(request.GetUserId())
 		if err != nil {
 			return nil, status.Errorf(
 				codes.InvalidArgument, fmt.Sprintf("invalid replies_to uuid: %s", err),
@@ -48,9 +56,8 @@ func (controller *TweetsController) PostTweet(
 		}
 	}
 
-	var quoteTo uuid.UUID
-	if request.GetRepliesTo() != "" {
-		quoteTo, err = uuid.Parse(request.GetUserId())
+	if request.GetQuoteTo() != "" {
+		_, err := uuid.Parse(request.GetUserId())
 		if err != nil {
 			return nil, status.Errorf(
 				codes.InvalidArgument, fmt.Sprintf("invalid quote_to uuid: %s", err),
@@ -58,14 +65,9 @@ func (controller *TweetsController) PostTweet(
 		}
 	}
 
-	tweet := models.Tweet{
-		Text:      utils.ValueToPointer[string](request.GetText()),
-		UserId:    &userId,
-		RepliesTo: &repliesTo,
-		QuoteTo:   &quoteTo,
-	}
+	tweet := tweet_converter.FromPostTweetRequestToDatabaseModel(request)
 
-	createdTweet, err := controller.tweetsUseCase.CreateTweet(&tweet)
+	createdTweet, err := controller.tweetsUseCase.CreateTweet(tweet)
 	if err != nil {
 		slog.Error(
 			"internal error when creating tweet",
@@ -75,7 +77,7 @@ func (controller *TweetsController) PostTweet(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service2.PostTweetResponse{
+	response := tweetsService.PostTweetResponse{
 		Tweet: tweet_converter.FromDatabaseModelToProtobufModel(createdTweet),
 	}
 
@@ -84,10 +86,10 @@ func (controller *TweetsController) PostTweet(
 
 func (controller *TweetsController) DeleteTweetById(
 	ctx context.Context,
-	request *tweets_service2.DeleteTweetByIdRequest,
-) (*tweets_service2.DeleteTweetByIdResponse, error) {
+	request *tweetsService.DeleteTweetByIdRequest,
+) (*tweetsService.DeleteTweetByIdResponse, error) {
 
-	response := tweets_service2.DeleteTweetByIdResponse{}
+	response := tweetsService.DeleteTweetByIdResponse{}
 	tweetId, err := uuid.Parse(request.TweetId)
 	if err != nil {
 		return &response, status.Errorf(
@@ -97,8 +99,7 @@ func (controller *TweetsController) DeleteTweetById(
 
 	err = controller.tweetsUseCase.DeleteTweetById(tweetId)
 	if err != nil {
-		var errNotFound *errs.ErrorNotFound
-		if errors.As(err, &errNotFound) {
+		if errors.As(err, &errs.ErrorNotFound{}) {
 			return nil, status.Errorf(
 				codes.NotFound, err.Error(),
 			)
@@ -116,8 +117,8 @@ func (controller *TweetsController) DeleteTweetById(
 
 func (controller *TweetsController) GetTweetById(
 	ctx context.Context,
-	request *tweets_service2.GetTweetByIdRequest,
-) (*tweets_service2.GetTweetByIdResponse, error) {
+	request *tweetsService.GetTweetByIdRequest,
+) (*tweetsService.GetTweetByIdResponse, error) {
 
 	tweetId, err := uuid.Parse(request.TweetId)
 	if err != nil {
@@ -143,7 +144,7 @@ func (controller *TweetsController) GetTweetById(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service2.GetTweetByIdResponse{
+	response := tweetsService.GetTweetByIdResponse{
 		Tweet: tweet_converter.FromDatabaseModelToProtobufModel(tweet),
 	}
 
@@ -152,8 +153,8 @@ func (controller *TweetsController) GetTweetById(
 
 func (controller *TweetsController) GetAllTweets(
 	ctx context.Context,
-	request *tweets_service2.GetAllTweetsRequest,
-) (*tweets_service2.GetAllTweetsResponse, error) {
+	request *tweetsService.GetAllTweetsRequest,
+) (*tweetsService.GetAllTweetsResponse, error) {
 
 	allTweets, err := controller.tweetsUseCase.GetAllTweets()
 	if err != nil {
@@ -165,7 +166,7 @@ func (controller *TweetsController) GetAllTweets(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service2.GetAllTweetsResponse{
+	response := tweetsService.GetAllTweetsResponse{
 		Tweets: tweet_converter.FromDatabaseModelsToProtobufModels(allTweets),
 	}
 
@@ -174,8 +175,8 @@ func (controller *TweetsController) GetAllTweets(
 
 func (controller *TweetsController) GetTweetsOfUser(
 	ctx context.Context,
-	request *tweets_service2.GetTweetsOfUserRequest,
-) (*tweets_service2.GetTweetsOfUserResponse, error) {
+	request *tweetsService.GetTweetsOfUserRequest,
+) (*tweetsService.GetTweetsOfUserResponse, error) {
 
 	userId, err := uuid.Parse(request.GetUserId())
 	if err != nil {
@@ -200,7 +201,7 @@ func (controller *TweetsController) GetTweetsOfUser(
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	response := tweets_service2.GetTweetsOfUserResponse{
+	response := tweetsService.GetTweetsOfUserResponse{
 		Tweets: tweet_converter.FromDatabaseModelsToProtobufModels(tweets),
 	}
 
