@@ -59,14 +59,12 @@ func Setup(appConfig *config.AppConfig) error {
 func setEnvVariables(appConfig *config.AppConfig) error {
 	// Try to load .env file for environment variables.
 	if err := godotenv.Load(".env"); err != nil {
-		slog.Error("error when loading .env file", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("error when loading .env file: %s", err)
 	}
 
 	appPortNumber, err := strconv.Atoi(os.Getenv("APP_PORT"))
 	if err != nil {
-		slog.Error("invalid config params: invalid app port number", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("invalid config params: invalid app port number: %s", err)
 	}
 
 	appEnvironmentType, err := config.ParseAppEnvironmentType(
