@@ -2,12 +2,12 @@ package db
 
 import (
 	"fmt"
+	"gorm.io/gorm/logger"
 	"tweets/config"
 	"tweets/domain/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -21,13 +21,28 @@ func Connect(appConfig config.AppConfig) error {
 		appConfig.DatabaseName, appConfig.DatabasePort,
 	)
 
-	DB, err = gorm.Open(postgres.Open(connectionConfig), &gorm.Config{})
+	gormLogger := logger.Default
+
+	switch appConfig.AppEnvironmentType {
+	case config.Development:
+		gormLogger = logger.Default.LogMode(logger.Warn)
+	case config.Debugging:
+		gormLogger = logger.Default.LogMode(logger.Info)
+	case config.Testing:
+		gormLogger = logger.Default.LogMode(logger.Warn)
+	case config.Production:
+		gormLogger = logger.Default.LogMode(logger.Error)
+	}
+
+	DB, err = gorm.Open(postgres.Open(connectionConfig), &gorm.Config{
+		Logger: gormLogger,
+	})
 
 	if err != nil {
 		return err
 	}
 
-	err = DB.AutoMigrate(&models.Tweet{})
+	err = DB.AutoMigrate(&models.User{}, &models.Tweet{}, &models.Follow{})
 	if err != nil {
 		return err
 	}
