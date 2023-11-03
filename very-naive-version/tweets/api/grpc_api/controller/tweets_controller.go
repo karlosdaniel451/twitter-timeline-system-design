@@ -129,11 +129,8 @@ func (controller *TweetsController) GetTweetById(
 
 	tweet, err := controller.tweetsUseCase.GetTweetById(tweetId)
 	if err != nil {
-		var errNotFound *errs.ErrorNotFound
-		if errors.As(err, &errNotFound) {
-			return nil, status.Errorf(
-				codes.NotFound, err.Error(),
-			)
+		if errors.As(err, &errs.ErrorNotFound{}) {
+			return nil, status.Errorf(codes.NotFound, err.Error())
 		}
 
 		slog.Error(

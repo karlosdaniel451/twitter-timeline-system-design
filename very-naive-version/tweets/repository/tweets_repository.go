@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -84,9 +85,9 @@ func (repository TweetRepositoryDB) GetTweetById(id uuid.UUID) (*models.Tweet, e
 
 	result := repository.db.First(&tweet, "id = ?", id)
 	if result.Error != nil {
-		if result.Error.Error() == gorm.ErrRecordNotFound.Error() {
-			return nil, &errs.ErrorNotFound{
-				Msg: fmt.Sprintf("there is no tweet with id %s", id.String()),
+		if errors.As(result.Error, &gorm.ErrRecordNotFound) {
+			return nil, errs.ErrorNotFound{
+				Msg: "there is no tweet with id " + id.String(),
 			}
 		}
 		return nil, result.Error
@@ -98,18 +99,13 @@ func (repository TweetRepositoryDB) GetTweetById(id uuid.UUID) (*models.Tweet, e
 func (repository TweetRepositoryDB) DeleteTweetById(id uuid.UUID) error {
 	var tweet models.Tweet
 
-	result := repository.db.First(&tweet, id)
+	result := repository.db.Delete(&tweet, id)
 	if result.Error != nil {
-		if result.Error.Error() == gorm.ErrRecordNotFound.Error() {
-			return &errs.ErrorNotFound{
-				Msg: fmt.Sprintf("there is no tweet with id %s", id.String()),
-			}
-		}
 		return result.Error
 	}
-	result = result.Delete(&tweet)
-	if result.Error != nil {
-		return result.Error
+
+	if result.RowsAffected == 0 {
+		return errs.ErrorNotFound{Msg: "there is no tweet with id " + id.String()}
 	}
 
 	return nil
