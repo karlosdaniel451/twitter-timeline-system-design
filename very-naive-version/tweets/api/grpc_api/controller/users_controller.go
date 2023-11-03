@@ -139,6 +139,33 @@ func (controller *UsersController) UnfollowUser(
 	return &response, nil
 }
 
+func (controller *UsersController) DeleteUserById(
+	ctx context.Context,
+	request *usersService.DeleteUserByIdRequest,
+) (*usersService.DeleteUserByIdResponse, error) {
+
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid user_id uuid: %s", err)
+	}
+
+	if err := controller.usersUseCase.DeleteUserById(userId); err != nil {
+		if errors.As(err, &errs.ErrorNotFound{}) {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+
+		slog.Error(
+			"internal error when deleting user by id",
+			"error", err,
+			"request", request.String(),
+		)
+		return nil, status.Error(codes.Internal, "internal error")
+	}
+
+	response := usersService.DeleteUserByIdResponse{}
+	return &response, nil
+}
+
 func (controller *UsersController) GetUserById(
 	ctx context.Context,
 	request *usersService.GetUserByIdRequest,

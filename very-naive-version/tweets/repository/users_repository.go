@@ -175,18 +175,13 @@ func (repository UserRepositoryDB) DoesUserFollow(
 func (repository UserRepositoryDB) DeleteUserById(id uuid.UUID) error {
 	var user models.User
 
-	result := repository.db.First(&user, id)
+	result := repository.db.Delete(&user, id)
 	if result.Error != nil {
-		if result.Error.Error() == gorm.ErrRecordNotFound.Error() {
-			return &errs.ErrorNotFound{
-				Msg: fmt.Sprintf("there is no user with id %s", id.String()),
-			}
-		}
 		return result.Error
 	}
 
-	if err := result.Delete(&user).Error; err != nil {
-		return result.Error
+	if result.RowsAffected == 0 {
+		return errs.ErrorNotFound{Msg: "there is no user with id" + id.String()}
 	}
 
 	return nil
