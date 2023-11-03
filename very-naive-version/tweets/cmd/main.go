@@ -20,9 +20,9 @@ func main() {
 
 	fmt.Printf("App config params:\n%s\n", *appConfig)
 
-	if err = grpc_api.StartApp(*appConfig); err != nil {
+	if err := grpc_api.StartApp(*appConfig); err != nil {
 		slog.Error(
-			"failed to start gRPC server at "+portNumberUnparsed,
+			"failed to start gRPC server at "+strconv.Itoa(appConfig.ListenerPort),
 			"error", err,
 		)
 		os.Exit(1)
