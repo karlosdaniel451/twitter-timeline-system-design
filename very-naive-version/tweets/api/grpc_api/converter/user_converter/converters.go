@@ -53,7 +53,27 @@ func FromProtobufModelToDatabaseModel(user *users_service.User) *models.User {
 
 // Convert a database model to a Protobuf model.
 func FromDatabaseModelToProtobufModel(user *models.User) *users_service.User {
-	var pinnedTweetId, mostRecentTweetId string
+	// Nullable fields that require conversion.
+	var (
+		description       string
+		location          string
+		pinnedTweetId     string
+		profileImageUrl   string
+		url               string
+		mostRecentTweetId string
+	)
+
+	if user.Description == nil {
+		description = ""
+	} else {
+		description = *user.Description
+	}
+
+	if user.Location == nil {
+		location = ""
+	} else {
+		location = *user.Location
+	}
 
 	if user.PinnedTweet == nil {
 		pinnedTweetId = ""
@@ -61,10 +81,22 @@ func FromDatabaseModelToProtobufModel(user *models.User) *users_service.User {
 		pinnedTweetId = user.PinnedTweet.Id.String()
 	}
 
-	if user.MostRecentTweet == nil {
+	if user.ProfileImageUrl == nil {
+		profileImageUrl = ""
+	} else {
+		profileImageUrl = *user.ProfileImageUrl
+	}
+
+	if user.Url == nil {
+		url = ""
+	} else {
+		url = *user.Url
+	}
+
+	if user.MostRecentTweetId == nil {
 		mostRecentTweetId = ""
 	} else {
-		mostRecentTweetId = user.MostRecentTweet.Id.String()
+		mostRecentTweetId = user.MostRecentTweetId.String()
 	}
 
 	return &users_service.User{
@@ -72,10 +104,10 @@ func FromDatabaseModelToProtobufModel(user *models.User) *users_service.User {
 		Name:            *user.Name,
 		UserName:        *user.Username,
 		Email:           *user.Email,
-		Description:     *user.Description,
-		Location:        *user.Location,
+		Description:     description,
+		Location:        location,
 		PinnedTweet:     pinnedTweetId,
-		ProfileImageUrl: *user.ProfileImageUrl,
+		ProfileImageUrl: profileImageUrl,
 		Protected:       *user.Protected,
 		PublicMetrics: &users_service.PublicMetrics{
 			FollowersCount: user.PublicMetrics.FollowersCount,
@@ -83,7 +115,7 @@ func FromDatabaseModelToProtobufModel(user *models.User) *users_service.User {
 			TweetCount:     user.PublicMetrics.TweetCount,
 			ListedCount:    user.PublicMetrics.ListedCount,
 		},
-		Url:             *user.Url,
+		Url:             url,
 		Verified:        *user.Verified,
 		MostRecentTweet: mostRecentTweetId,
 		FollowedUserIds: utils.MapStringer[uuid.UUID](user.FolloweeIds),
