@@ -34,6 +34,15 @@ func (controller *UsersController) SignUp(
 
 	createdUser, err := controller.usersUseCase.CreateUser(userToBeCreated)
 	if err != nil {
+		if errors.As(err, &errs.ErrorAlreadyExists{}) {
+			errAlreadyExists := err.(errs.ErrorAlreadyExists)
+			return nil, status.Errorf(
+				codes.AlreadyExists,
+				"user already exists: unique fields with repeated values: %s",
+				errAlreadyExists.FieldsWithRepeatedValues,
+			)
+		}
+
 		slog.Error(
 			"internal error when creating user",
 			"error", err,

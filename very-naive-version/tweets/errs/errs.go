@@ -8,6 +8,15 @@ func (err ErrorNotFound) Error() string {
 	return err.Msg
 }
 
+type ErrorAlreadyExists struct {
+	Msg                      string
+	FieldsWithRepeatedValues []string
+}
+
+func (err ErrorAlreadyExists) Error() string {
+	return err.Msg
+}
+
 type ErrorUserAlreadyFollow struct {
 	Msg string
 }

@@ -19,6 +19,11 @@ type UserRepository interface {
 	GetFollowerIdsOfUser(id uuid.UUID) ([]uuid.UUID, error)
 	GetFolloweeIdsOfUser(id uuid.UUID) ([]uuid.UUID, error)
 	GetAllUsers() ([]*models.User, error)
+
+	CheckUserUniqueFields(
+		id *uuid.UUID,
+		username, email *string,
+	) (*models.UserUniqueFieldsChecking, error)
 }
 
 type UserRepositoryDB struct {
@@ -271,4 +276,57 @@ func (repository UserRepositoryDB) GetAllUsers() ([]*models.User, error) {
 	}
 
 	return allUsers, nil
+}
+
+func (repository UserRepositoryDB) CheckUserUniqueFields(
+	id *uuid.UUID, username *string, email *string,
+) (*models.UserUniqueFieldsChecking, error) {
+
+	var checking models.UserUniqueFieldsChecking
+	var count int64
+
+	if id != nil {
+		result := repository.db.Unscoped().Model(&models.User{}).
+			Where(&models.User{Id: id}).Count(&count)
+		if err := result.Error; err != nil {
+			return nil, fmt.Errorf(
+				"error when checking if there is a user with id %s: %s",
+				id.String(), err)
+		}
+
+		if count > 0 {
+			checking.Id = true
+		}
+	}
+
+	if username != nil {
+		result := repository.db.Unscoped().Model(&models.User{}).
+			Where(&models.User{Username: username}).Count(&count)
+		if err := result.Error; err != nil {
+			return nil, fmt.Errorf(
+				"error when checking if there is a user with username %s: %s",
+				*username, err)
+		}
+
+		if count > 0 {
+			checking.Username = true
+		}
+	}
+
+	if email != nil {
+		result := repository.db.Unscoped().Model(&models.User{}).
+			Where(&models.User{Email: email}).Count(&count)
+
+		if err := result.Error; err != nil {
+			return nil, fmt.Errorf(
+				"error when checking if there is a user with email %s: %s",
+				*email, err)
+		}
+
+		if count > 0 {
+			checking.Email = true
+		}
+	}
+
+	return &checking, nil
 }

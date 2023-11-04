@@ -50,3 +50,9 @@ type Follow struct {
 	UpdatedAt  time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
 	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 }
+
+type UserUniqueFieldsChecking struct {
+	Id       bool
+	Username bool
+	Email    bool
+}
